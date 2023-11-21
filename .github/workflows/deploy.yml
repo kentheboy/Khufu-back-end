@@ -16,7 +16,7 @@ jobs:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
     - name: Deploy to Ubuntu
       run: |
-        ssh ubuntu@your_ubuntu_server_ip  'cd /var/www/html/khufu-back-end && ./deploy.sh'
+        ssh ubuntu@52.198.121.46  'cd /var/www/html/khufu-back-end && ./deploy.sh'
         
         
         
