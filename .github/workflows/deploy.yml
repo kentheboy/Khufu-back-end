@@ -1,4 +1,4 @@
-name: Laravel
+name: Deploy Laravel to Ubuntu
 
 on:
   push:
@@ -10,26 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
       with:
-        php-version: '8.0'
-    - uses: actions/checkout@v3
-    - name: Install Dependencies
-      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-    - name: Generate key
-      run: php artisan key:generate
-    - name: migration
-      run: php artisan migrate
-    - name: Directory Permissions
-      run: chmod -R 777 storage bootstrap/cache
-    - name: Create Database
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Deploy to Ubuntu
       run: |
         cd /var/www/html/khufu-back-end
-        php artisan down --message 'The app is under system-update. Please try again later.'
-        echo "Deploy inprogress..."
-        git checkout develop
-        git pull origin develop
-        php artisan up
+        ./deploy.sh
         
         
         
