@@ -1,7 +1,7 @@
 php artisan down
 echo "Deploy inprogress...\n"
-git checkout develop
-git pull origin develop
+git checkout .
+git pull
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
 php artisan config:cache
