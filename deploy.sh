@@ -13,8 +13,8 @@ composer install --no-dev --optimize-autoloader
 echo "php artisan migrate --force"
 php artisan migrate --force
 
-echo "php artisan config:cache"
-php artisan config:cache
+echo "php artisan optimize"
+php artisan optimize
 
 echo "php artisan view:clear"
 php artisan view:clear
