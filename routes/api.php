@@ -21,4 +21,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('/test', [ApiTestController::class, 'test']);
+
+// Khufu ProductsTable
 Route::post('/products/create', [ProductsController::class, 'create']);
+Route::get('/products/{id}', [ProductsController::class, 'read']);
+Route::get('/products', [ProductsController::class, 'index']);
+Route::patch('/products/{id}/edit', [ProductsController::class, 'update']);
+Route::delete('/products/{id}/delete', [ProductsController::class, 'delete']);
