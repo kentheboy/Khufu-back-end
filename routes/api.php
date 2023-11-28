@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiTestController;
+use App\Http\Controllers\Khufu\ProductsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,3 +21,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('/test', [ApiTestController::class, 'test']);
+Route::post('/products/create', [ProductsController::class, 'create']);
