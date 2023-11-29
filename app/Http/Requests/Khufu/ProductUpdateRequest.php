@@ -3,7 +3,8 @@
 namespace App\Http\Requests\Khufu;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ProductUpdateRequest extends FormRequest
 {
@@ -67,13 +68,8 @@ class ProductUpdateRequest extends FormRequest
         ];
     }
     
-    public function messages()
+    protected function failedValidation(Validator $validator)
     {
-        return [
-            'image1.data_url' => 'The field name must be a data URL.',
-            'image2.data_url' => 'The field name must be a data URL.',
-            'image3.data_url' => 'The field name must be a data URL.',
-            'image4.data_url' => 'The field name must be a data URL.',
-        ];
+        throw new HttpResponseException(response()->json($validator->errors(), 422));
     }
 }

@@ -3,7 +3,8 @@
 namespace App\Http\Requests\Khufu;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ProductCreateRequest extends FormRequest
 {
@@ -16,26 +17,6 @@ class ProductCreateRequest extends FormRequest
     // {
     //     return true;
     // }
-
-    /**
-     * Check if the field is valid dataUrl
-     * 
-     * @param $attribute
-     * @param $value
-     * @param $parameters
-     * @param $validator
-     * @return Bool
-     */
-    private function dataUrlValidator($attribute, $value, $parameters, $validator)
-    {
-        $regex = '/^data:image\/(\w+);base64,/';
-
-        if (!is_string($value) || !preg_match($regex, $value)) {
-            return false;
-        }
-
-        return true;
-    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -64,13 +45,8 @@ class ProductCreateRequest extends FormRequest
         ];
     }
     
-    public function messages()
+    protected function failedValidation(Validator $validator)
     {
-        return [
-            'image1.data_url' => 'The field name must be a data URL.',
-            'image2.data_url' => 'The field name must be a data URL.',
-            'image3.data_url' => 'The field name must be a data URL.',
-            'image4.data_url' => 'The field name must be a data URL.',
-        ];
+        throw new HttpResponseException(response()->json($validator->errors(), 422));
     }
 }
