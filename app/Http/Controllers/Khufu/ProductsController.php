@@ -23,7 +23,7 @@ class ProductsController extends Controller
             'description' => $description,
             'price' => $price,
             'status' => 1,
-            'custom_field' => $customfields,
+            'custom_fields' => $customfields,
         ]);
 
         return $newProduct;
