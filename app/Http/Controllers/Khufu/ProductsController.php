@@ -8,6 +8,7 @@ use App\Http\Requests\Khufu\ProductCreateRequest;
 use App\Http\Requests\Khufu\ProductReadRequest;
 use App\Http\Requests\Khufu\ProductUpdateRequest;
 use App\Models\Khufu\Product;
+use Illuminate\Support\Facades\Log;
 
 class ProductsController extends Controller
 {
@@ -23,7 +24,7 @@ class ProductsController extends Controller
             'description' => $description,
             'price' => $price,
             'status' => 1,
-            'custom_fields' => $customfields,
+            'customfields' => $customfields,
         ]);
 
         return $newProduct;
