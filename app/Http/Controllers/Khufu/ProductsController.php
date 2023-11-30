@@ -61,11 +61,14 @@ class ProductsController extends Controller
 
     public function read(Request $request){
         $product = Product::find($request->id);
+        if (!isset($product['images']) || empty($product['images'])) {
+            return $product;
+        }
         $images = json_decode($product['images']);
 
         // Get all images' dataUrl
         foreach ($images as $imageKey => &$imageValue) {
-            if (!isset($imageValue) && empty($imageValue)) {
+            if (!isset($imageValue) || empty($imageValue)) {
                 continue;
             }
 
