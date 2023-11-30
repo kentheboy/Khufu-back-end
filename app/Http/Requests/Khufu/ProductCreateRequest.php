@@ -32,7 +32,6 @@ class ProductCreateRequest extends FormRequest
                 'max:255'
             ],
             'description' => [
-                'string',
                 'max:500'
             ],
             'price' => [
@@ -40,7 +39,7 @@ class ProductCreateRequest extends FormRequest
                 'numeric'
             ],
             'customfields' => [
-                'string',
+                'json',
             ],
         ];
     }
