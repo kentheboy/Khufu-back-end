@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Khufu;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
+use Illuminate\Support\Facades\Log;
+
 use App\Http\Requests\Khufu\ProductCreateRequest;
 use App\Http\Requests\Khufu\ProductReadRequest;
 use App\Http\Requests\Khufu\ProductUpdateRequest;
 use App\Models\Khufu\Product;
-use Illuminate\Support\Facades\Log;
 
 class ProductsController extends Controller
 {
@@ -62,7 +64,26 @@ class ProductsController extends Controller
     }
 
     public function index() {
-        return Product::all();
+        $products =  Product::all();
+
+        // Get only first image's dataUrl
+        foreach($products as $product) {
+            $images = json_decode($product['images']);
+            Log::info($images);
+            if (!isset($images) && empty($images)) {
+                $product['main_image'] = null;
+                continue;
+            }
+            Log::info(storage_path('app/public/uploads/' . $images[0]));
+            try {
+                $dataUrl = $this->getDataUrlFromFile(storage_path('app/public/uploads/' . $images[0]));
+                $product['main_image'] = $dataUrl;
+            } catch (Exception $e) {
+                return Log::error($e);
+            }
+        }
+
+        return $products;
     }
 
     public function update(ProductUpdateRequest $request){
@@ -86,5 +107,20 @@ class ProductsController extends Controller
 
     public function delete(ProductReadRequest $request){
         return Product::find($request->id)->delete();
+    }
+
+    private function getDataUrlFromFile($file_path, $mime = '') {
+        if (!is_file($file_path)) {
+            throw new InvalidArgumentException('The provided file path does not exist.');
+        }
+    
+        if (empty($mime)) {
+            $mime = mime_content_type($file_path);
+        }
+    
+        $data = file_get_contents($file_path);
+        $base64 = base64_encode($data);
+    
+        return 'data:' . $mime . ';base64,' . $base64;
     }
 }
