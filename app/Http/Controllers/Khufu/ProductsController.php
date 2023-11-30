@@ -18,6 +18,32 @@ class ProductsController extends Controller
         $description = $request->description;
         $price = $request->price;
         $customfields = $request->customfields;
+        $dataUrls = json_decode($request->images);
+
+        // Get the mime type and the data from the dataUrl
+        foreach ($dataUrls as $key => &$dataUrl) {
+            if (!isset($dataUrl) || empty($dataUrl)) {
+                continue;
+            }
+        
+            // Split the data URL into its parts
+            $parts = explode(',', $dataUrl);
+        
+            // Extract the mime type and the base64 encoded data
+            $mimeType = explode(';', $parts[0])[0];
+            $base64Data = $parts[1];
+        
+            // Decode the base64 encoded data
+            $data = base64_decode($base64Data);
+        
+            // Save the file
+            $filename = uniqid() . '.' . explode('/', $mimeType)[1];
+            $filePath = storage_path('app/public/uploads/' . $filename);
+            file_put_contents($filePath, $data);
+        
+            // Store the filename back into the $dataUrls array
+            $dataUrl = substr($filename, 0);
+        }
 
         $newProduct = Product::create([
             'name' => $name,
@@ -25,6 +51,7 @@ class ProductsController extends Controller
             'price' => $price,
             'status' => 1,
             'customfields' => $customfields,
+            'images' => json_encode($dataUrls),
         ]);
 
         return $newProduct;
