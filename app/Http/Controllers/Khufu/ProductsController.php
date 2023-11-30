@@ -59,8 +59,27 @@ class ProductsController extends Controller
         return $newProduct;
     }
 
-    public function read(ProductReadRequest $request){
-        return Product::find($request->id);
+    public function read(Request $request){
+        $product = Product::find($request->id);
+        $images = json_decode($product['images']);
+
+        // Get all images' dataUrl
+        foreach ($images as $imageKey => &$imageValue) {
+            if (!isset($imageValue) && empty($imageValue)) {
+                continue;
+            }
+
+            try {
+                $imageValue = $this->getDataUrlFromFile(storage_path('app/public/uploads/' . $imageValue));
+                Log::info($imageValue);
+            } catch (Exception $e) {
+                return Log::error($e);
+            }
+        }
+
+        $product['images'] = json_encode($images);
+
+        return $product;
     }
 
     public function index() {
@@ -69,12 +88,12 @@ class ProductsController extends Controller
         // Get only first image's dataUrl
         foreach($products as $product) {
             $images = json_decode($product['images']);
-            Log::info($images);
+            
             if (!isset($images) && empty($images)) {
                 $product['main_image'] = null;
                 continue;
             }
-            Log::info(storage_path('app/public/uploads/' . $images[0]));
+            
             try {
                 $dataUrl = $this->getDataUrlFromFile(storage_path('app/public/uploads/' . $images[0]));
                 $product['main_image'] = $dataUrl;
@@ -105,7 +124,7 @@ class ProductsController extends Controller
         return $product;
     }
 
-    public function delete(ProductReadRequest $request){
+    public function delete(Request $request){
         return Product::find($request->id)->delete();
     }
 
