@@ -92,7 +92,7 @@ class ProductsController extends Controller
         foreach($products as $product) {
             $images = json_decode($product['images']);
             
-            if (!isset($images) && empty($images)) {
+            if (!isset($images[0]) && empty($images[0])) {
                 $product['main_image'] = null;
                 continue;
             }
