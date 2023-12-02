@@ -24,27 +24,12 @@ class ProductsController extends Controller
 
         // Get the mime type and the data from the dataUrl
         foreach ($dataUrls as $key => &$dataUrl) {
+
             if (!isset($dataUrl) || empty($dataUrl)) {
                 continue;
             }
-        
-            // Split the data URL into its parts
-            $parts = explode(',', $dataUrl);
-        
-            // Extract the mime type and the base64 encoded data
-            $mimeType = explode(';', $parts[0])[0];
-            $base64Data = $parts[1];
-        
-            // Decode the base64 encoded data
-            $data = base64_decode($base64Data);
-        
-            // Save the file
-            $filename = uniqid() . '.' . explode('/', $mimeType)[1];
-            $filePath = storage_path('app/public/uploads/' . $filename);
-            file_put_contents($filePath, $data);
-        
-            // Store the filename back into the $dataUrls array
-            $dataUrl = substr($filename, 0);
+            
+            $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
         }
 
         $newProduct = Product::create([
@@ -108,12 +93,13 @@ class ProductsController extends Controller
         return $products;
     }
 
-    public function update(ProductUpdateRequest $request){
+    public function update(Request $request){
         $id = $request->id;
         $name = $request->name;
         $description = $request->description;
         $price = $request->price;
         $customfields = $request->customfields;
+        $dataUrls = json_decode($request->images);
 
         $product = Product::find($id);
 
@@ -144,5 +130,27 @@ class ProductsController extends Controller
         $base64 = base64_encode($data);
     
         return 'data:' . $mime . ';base64,' . $base64;
+    }
+
+    private function saveImageAndReturnFileName($dataUrl){
+        // Split the data URL into its parts
+        $parts = explode(',', $dataUrl);
+    
+        // Extract the mime type and the base64 encoded data
+        $mimeType = explode(';', $parts[0])[0];
+        $base64Data = $parts[1];
+    
+        // Decode the base64 encoded data
+        $data = base64_decode($base64Data);
+    
+        // Save the file
+        $filename = uniqid() . '.' . explode('/', $mimeType)[1];
+        $filePath = storage_path('app/public/uploads/' . $filename);
+        file_put_contents($filePath, $data);
+    
+        // Store the filename back into the $dataUrls array
+        $dataUrl = substr($filename, 0);
+
+        return $dataUrl;
     }
 }
