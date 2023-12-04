@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 use App\Http\Requests\Khufu\ProductCreateRequest;
 use App\Http\Requests\Khufu\ProductReadRequest;
@@ -28,7 +29,7 @@ class ProductsController extends Controller
             if (!isset($dataUrl) || empty($dataUrl)) {
                 continue;
             }
-            
+
             $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
         }
 
@@ -59,7 +60,6 @@ class ProductsController extends Controller
 
             try {
                 $imageValue = $this->getDataUrlFromFile(storage_path('app/public/uploads/' . $imageValue));
-                Log::info($imageValue);
             } catch (Exception $e) {
                 return Log::error($e);
             }
@@ -83,7 +83,7 @@ class ProductsController extends Controller
             }
             
             try {
-                $dataUrl = $this->getDataUrlFromFile(storage_path('app/public/uploads/' . $images[0]));
+                $dataUrl = $this->getDataUrlFromFile('/public/uploads/' . $images[0]);
                 $product['main_image'] = $dataUrl;
             } catch (Exception $e) {
                 return Log::error($e);
@@ -101,13 +101,24 @@ class ProductsController extends Controller
         $customfields = $request->customfields;
         $dataUrls = json_decode($request->images);
 
+        // Get the mime type and the data from the dataUrl
+        foreach ($dataUrls as $key => &$dataUrl) {
+
+            if (!isset($dataUrl) || empty($dataUrl)) {
+                continue;
+            }
+            
+            $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
+        }
+
         $product = Product::find($id);
 
         $product->update([
             'name' => $name,
             'description' => $description,
             'price' => $price,
-            'custom_field' => $customfields,
+            'customfields' => $customfields,
+            'images' => json_encode($dataUrls),
         ]);
 
         return $product;
@@ -118,17 +129,17 @@ class ProductsController extends Controller
     }
 
     private function getDataUrlFromFile($file_path, $mime = '') {
-        if (!is_file($file_path)) {
-            throw new InvalidArgumentException('The provided file path does not exist.');
-        }
-    
-        if (empty($mime)) {
-            $mime = mime_content_type($file_path);
-        }
-    
-        $data = file_get_contents($file_path);
+        $data = Storage::get($file_path);
         $base64 = base64_encode($data);
-    
+        
+        if (!isset($base64) || empty($base64)) {
+            Log::error([
+                'message' => 'The provided file path does not exist.',
+                'filePath' => $file_path
+            ]);
+            return null;
+        }
+
         return 'data:' . $mime . ';base64,' . $base64;
     }
 
@@ -145,12 +156,12 @@ class ProductsController extends Controller
     
         // Save the file
         $filename = uniqid() . '.' . explode('/', $mimeType)[1];
-        $filePath = storage_path('app/public/uploads/' . $filename);
-        file_put_contents($filePath, $data);
+        Storage::disk('local')->put('/public/uploads/' . $filename, $data);
     
         // Store the filename back into the $dataUrls array
         $dataUrl = substr($filename, 0);
 
         return $dataUrl;
     }
+
 }
