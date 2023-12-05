@@ -59,7 +59,7 @@ class ProductsController extends Controller
             }
 
             try {
-                $imageValue = $this->getDataUrlFromFile(storage_path('app/public/uploads/' . $imageValue));
+                $imageValue = $this->getDataUrlFromFile('/public/uploads/' . $imageValue);
             } catch (Exception $e) {
                 return Log::error($e);
             }
@@ -101,7 +101,22 @@ class ProductsController extends Controller
         $customfields = $request->customfields;
         $dataUrls = json_decode($request->images);
 
-        // Get the mime type and the data from the dataUrl
+        $product = Product::find($id);
+
+        // delete preexisting images
+        if (isset($product['images']) && !empty($product['images'])) {
+            $images = json_decode($product['images']);
+            
+            foreach ($images as $imageKey => &$filename) {
+                if (!isset($filename) || empty($filename)) {
+                    continue;
+                }
+                $this->deleteImage($filename);
+            }
+        }
+
+        
+        // update the image file for each dataUrl
         foreach ($dataUrls as $key => &$dataUrl) {
 
             if (!isset($dataUrl) || empty($dataUrl)) {
@@ -111,7 +126,6 @@ class ProductsController extends Controller
             $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
         }
 
-        $product = Product::find($id);
 
         $product->update([
             'name' => $name,
@@ -125,6 +139,20 @@ class ProductsController extends Controller
     }
 
     public function delete(Request $request){
+        $product = Product::find($request->id);
+
+        // delete preexisting images
+        if (isset($product['images']) && !empty($product['images'])) {
+            $images = json_decode($product['images']);
+            
+            foreach ($images as $imageKey => &$filename) {
+                if (!isset($filename) || empty($filename)) {
+                    continue;
+                }
+                $this->deleteImage($filename);
+            }
+        }
+
         return Product::find($request->id)->delete();
     }
 
@@ -162,6 +190,10 @@ class ProductsController extends Controller
         $dataUrl = substr($filename, 0);
 
         return $dataUrl;
+    }
+
+    private function deleteImage($filename) {
+        Storage::disk('local')->delete('/public/uploads/' . $filename);
     }
 
 }
