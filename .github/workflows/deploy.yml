@@ -1,35 +1,31 @@
-name: Laravel
+name: Deploy Laravel to Ubuntu
 
 on:
   push:
-    branches: [ "develop" ]
+    branches:
+      - develop
+      - main
 
 jobs:
   Dev-Deploy:
-
     runs-on: ubuntu-latest
-
+    if: github.ref == 'refs/heads/develop'
     steps:
-    - uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
       with:
-        php-version: '8.0'
-    - uses: actions/checkout@v3
-    - name: Install Dependencies
-      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-    - name: Generate key
-      run: php artisan key:generate
-    - name: migration
-      run: php artisan migrate
-    - name: Directory Permissions
-      run: chmod -R 777 storage bootstrap/cache
-    - name: Create Database
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+    - name: Deploy to Ubuntu
       run: |
-        cd /var/www/html/khufu-back-end
-        php artisan down --message 'The app is under system-update. Please try again later.'
-        echo "Deploy inprogress..."
-        git checkout develop
-        git pull origin develop
-        php artisan up
-        
-        
-        
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@52.198.121.46 'cd /var/www/html/khufu-back-end && chmod 775 deploy.sh && ./deploy.sh'
+  Prod-Deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+      - name: Deploy to Ubuntu
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@35.79.73.95 'cd /var/www/html/khufu-back-end && chmod 775 deploy.sh && ./deploy.sh'
