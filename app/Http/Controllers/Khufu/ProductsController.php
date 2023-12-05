@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 use App\Http\Requests\Khufu\ProductCreateRequest;
 use App\Http\Requests\Khufu\ProductReadRequest;
@@ -24,27 +25,12 @@ class ProductsController extends Controller
 
         // Get the mime type and the data from the dataUrl
         foreach ($dataUrls as $key => &$dataUrl) {
+
             if (!isset($dataUrl) || empty($dataUrl)) {
                 continue;
             }
-        
-            // Split the data URL into its parts
-            $parts = explode(',', $dataUrl);
-        
-            // Extract the mime type and the base64 encoded data
-            $mimeType = explode(';', $parts[0])[0];
-            $base64Data = $parts[1];
-        
-            // Decode the base64 encoded data
-            $data = base64_decode($base64Data);
-        
-            // Save the file
-            $filename = uniqid() . '.' . explode('/', $mimeType)[1];
-            $filePath = storage_path('app/public/uploads/' . $filename);
-            file_put_contents($filePath, $data);
-        
-            // Store the filename back into the $dataUrls array
-            $dataUrl = substr($filename, 0);
+
+            $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
         }
 
         $newProduct = Product::create([
@@ -73,8 +59,7 @@ class ProductsController extends Controller
             }
 
             try {
-                $imageValue = $this->getDataUrlFromFile(storage_path('app/public/uploads/' . $imageValue));
-                Log::info($imageValue);
+                $imageValue = $this->getDataUrlFromFile('/public/uploads/' . $imageValue);
             } catch (Exception $e) {
                 return Log::error($e);
             }
@@ -98,7 +83,7 @@ class ProductsController extends Controller
             }
             
             try {
-                $dataUrl = $this->getDataUrlFromFile(storage_path('app/public/uploads/' . $images[0]));
+                $dataUrl = $this->getDataUrlFromFile('/public/uploads/' . $images[0]);
                 $product['main_image'] = $dataUrl;
             } catch (Exception $e) {
                 return Log::error($e);
@@ -108,41 +93,107 @@ class ProductsController extends Controller
         return $products;
     }
 
-    public function update(ProductUpdateRequest $request){
+    public function update(Request $request){
         $id = $request->id;
         $name = $request->name;
         $description = $request->description;
         $price = $request->price;
         $customfields = $request->customfields;
+        $dataUrls = json_decode($request->images);
 
         $product = Product::find($id);
+
+        // delete preexisting images
+        if (isset($product['images']) && !empty($product['images'])) {
+            $images = json_decode($product['images']);
+            
+            foreach ($images as $imageKey => &$filename) {
+                if (!isset($filename) || empty($filename)) {
+                    continue;
+                }
+                $this->deleteImage($filename);
+            }
+        }
+
+        
+        // update the image file for each dataUrl
+        foreach ($dataUrls as $key => &$dataUrl) {
+
+            if (!isset($dataUrl) || empty($dataUrl)) {
+                continue;
+            }
+            
+            $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
+        }
+
 
         $product->update([
             'name' => $name,
             'description' => $description,
             'price' => $price,
-            'custom_field' => $customfields,
+            'customfields' => $customfields,
+            'images' => json_encode($dataUrls),
         ]);
 
         return $product;
     }
 
     public function delete(Request $request){
+        $product = Product::find($request->id);
+
+        // delete preexisting images
+        if (isset($product['images']) && !empty($product['images'])) {
+            $images = json_decode($product['images']);
+            
+            foreach ($images as $imageKey => &$filename) {
+                if (!isset($filename) || empty($filename)) {
+                    continue;
+                }
+                $this->deleteImage($filename);
+            }
+        }
+
         return Product::find($request->id)->delete();
     }
 
     private function getDataUrlFromFile($file_path, $mime = '') {
-        if (!is_file($file_path)) {
-            throw new InvalidArgumentException('The provided file path does not exist.');
-        }
-    
-        if (empty($mime)) {
-            $mime = mime_content_type($file_path);
-        }
-    
-        $data = file_get_contents($file_path);
+        $data = Storage::get($file_path);
         $base64 = base64_encode($data);
-    
+        
+        if (!isset($base64) || empty($base64)) {
+            Log::error([
+                'message' => 'The provided file path does not exist.',
+                'filePath' => $file_path
+            ]);
+            return null;
+        }
+
         return 'data:' . $mime . ';base64,' . $base64;
     }
+
+    private function saveImageAndReturnFileName($dataUrl){
+        // Split the data URL into its parts
+        $parts = explode(',', $dataUrl);
+    
+        // Extract the mime type and the base64 encoded data
+        $mimeType = explode(';', $parts[0])[0];
+        $base64Data = $parts[1];
+    
+        // Decode the base64 encoded data
+        $data = base64_decode($base64Data);
+    
+        // Save the file
+        $filename = uniqid() . '.' . explode('/', $mimeType)[1];
+        Storage::disk('local')->put('/public/uploads/' . $filename, $data);
+    
+        // Store the filename back into the $dataUrls array
+        $dataUrl = substr($filename, 0);
+
+        return $dataUrl;
+    }
+
+    private function deleteImage($filename) {
+        Storage::disk('local')->delete('/public/uploads/' . $filename);
+    }
+
 }
