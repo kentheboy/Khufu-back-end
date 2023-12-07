@@ -28,4 +28,4 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
       - name: Deploy to Ubuntu
         run: |
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@35.79.73.95 'cd /var/www/html/khufu-back-end && chmod 775 deploy.sh && ./deploy.sh'
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@35.79.73.95 'cd /var/www/api.class-rental-car.com/khufu-back-end && chmod 775 deploy.sh && ./deploy.sh'
