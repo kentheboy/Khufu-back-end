@@ -8,14 +8,12 @@ use InvalidArgumentException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-use App\Http\Requests\Khufu\ProductCreateRequest;
-use App\Http\Requests\Khufu\ProductReadRequest;
-use App\Http\Requests\Khufu\ProductUpdateRequest;
+use App\Http\Requests\Khufu\Product\CreateRequest;
 use App\Models\Khufu\Product;
 
 class ProductsController extends Controller
 {
-    public function create(ProductCreateRequest $request){
+    public function create(CreateRequest $request){
 
         $name = $request->name;
         $description = $request->description;
