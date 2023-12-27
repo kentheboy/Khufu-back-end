@@ -28,7 +28,6 @@ class CreateRequest extends FormRequest
         return [
             'product_id' => [
                 'required',
-                'string',
                 'max:255'
             ],
             'name' => [
@@ -42,8 +41,7 @@ class CreateRequest extends FormRequest
                 'max:255'
             ],
             'tel' => [
-                'required',
-                'regex:/(01)[0-9]{9}/'
+                'required'
             ],
             'start_at' => [
                 'required',
