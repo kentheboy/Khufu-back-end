@@ -9,6 +9,7 @@ use App\Http\Requests\Khufu\Schedule\CreateRequest;
 use App\Http\Requests\Khufu\Schedule\SearchRequest;
 use App\Models\Khufu\Product;
 use App\Models\Khufu\Schedule;
+use Illuminate\Support\Facades\Log;
 
 use Carbon\Carbon;
 
@@ -55,6 +56,8 @@ class SchedulesController extends Controller
         // check if the product is available during the selected hours
         $availableProducts = $this->getAvailableProducts($start_at, $end_at);
         Log::info($availableProducts);
+
+        return $request;
         // if (in_array($productId, $availableProducts)) {
             
         // }
