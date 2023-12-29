@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests\Khufu\Schedule\CreateRequest;
 use App\Http\Requests\Khufu\Schedule\SearchRequest;
+use App\Http\Resources\Khufu\Schedule\ProductResource;
 use App\Models\Khufu\Product;
 use App\Models\Khufu\Schedule;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +17,7 @@ use Carbon\Carbon;
 class SchedulesController extends Controller
 {
     public function search(SearchRequest $request) {
-        return $this->getAvailableProducts($request->start_at, $request->end_at);
+        return ProductResource::collection($this->getAvailableProducts($request->start_at, $request->end_at));
     }
     
     private function getAvailableProducts($start_at, $end_at) {
