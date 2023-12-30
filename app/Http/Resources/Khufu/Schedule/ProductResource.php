@@ -4,6 +4,7 @@ namespace App\Http\Resources\Khufu\Schedule;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Log;
 
 class ProductResource extends JsonResource
 {
@@ -14,8 +15,18 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $images = json_decode($this->images);
+        foreach($images as $key => $image) {
+            if (isset($image) && !empty($image)) {
+                $images[$key] = "/storage/uploads/" . $image;
+            }
+        }
+
         return [
-            "title" => $this->name
+            "title" => $this->name,
+            "price" => $this->price,
+            "customfields" => $this->customfields,
+            "images" => $images
         ];
     }
 }
