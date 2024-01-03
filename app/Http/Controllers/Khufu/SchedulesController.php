@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Khufu;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use GuzzleHttp\Client;
 
 use App\Http\Requests\Khufu\Schedule\CreateRequest;
 use App\Http\Requests\Khufu\Schedule\SearchRequest;
@@ -12,6 +13,8 @@ use App\Models\Khufu\Product;
 use App\Models\Khufu\Schedule;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+
+
 
 use Carbon\Carbon;
 
@@ -76,7 +79,7 @@ class SchedulesController extends Controller
         ]);
 
         // save schedule information to schedules table.
-        Schedule::create([
+        $scheduleInfo = Schedule::create([
             'product_id' => $productId,
             'user_id' => $customerInfo->id,
             'start_at' => $start_at,
@@ -88,6 +91,40 @@ class SchedulesController extends Controller
             ])
         ]);
 
+        $productInfo = Product::find($scheduleInfo->product_id);
+
+        $this->sendAdminSlackNotice([
+            "type" => "mrkdwn",
+            "text" => "<!channel> 予約が入りました！
+                \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>空港お出迎え時刻：$customfields->airportPickup\n>空港お見送り時刻：$customfields->airportDropoff
+                \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n>免許証番号：$customfields->licenseNumber\n>生年月日：$customfields->dob
+                \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name
+                \nfrom： ".env('APP_URL')
+        ]);
+
         return $request;
+    }
+
+    private function sendAdminSlackNotice($messageContent)
+    {
+        Log::info($messageContent);
+        $client = new Client();
+
+        $response = $client->post(env('SLACK_WEBHOOK_URL'), [
+            'json' => $messageContent,
+        ]);
+
+        if ($response->getStatusCode() == 200) {
+            return [
+                'message' => 'Message sent successfully',
+                'status' => 200
+            ];
+        } else {
+            Log::error(json_encode($response));
+            return [
+                'message' => 'Failed to send message',
+                'status' => 500
+            ];
+        }
     }
 }
