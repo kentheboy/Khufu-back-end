@@ -63,7 +63,8 @@ class SchedulesController extends Controller
         if (!in_array($productId, $availableProductIds)) {
             return response()->json(['message' => 'The productId: {' . $productId . '} is not available.'], 400); 
         }
-        // Log::info($customfields);
+
+        // save customer information to users table.
         $customerInfo = User::create([
             'name' => $customerName,
             'email' => $customerEmail,
@@ -73,15 +74,20 @@ class SchedulesController extends Controller
                 'dob' => $customfields->dob,
             ])
         ]);
-        // Schedule::create([
-        //     'product_id' => $productId,
 
-        // ]);
-        // Log::info($availableProducts);
+        // save schedule information to schedules table.
+        Schedule::create([
+            'product_id' => $productId,
+            'user_id' => $customerInfo->id,
+            'start_at' => $start_at,
+            'end_at' => $end_at,
+            'total_fee' => $total_fee,
+            'customfields' => json_encode([
+                "airportPickup" => $customfields->airportPickup,
+                "airportDropoff" => $customfields->airportDropoff 
+            ])
+        ]);
 
         return $request;
-        // if (in_array($productId, $availableProducts)) {
-            
-        // }
     }
 }
