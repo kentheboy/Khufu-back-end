@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Khufu;
+namespace App\Http\Requests\Khufu\Product;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ProductUpdateRequest extends FormRequest
+class CreateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -19,26 +19,6 @@ class ProductUpdateRequest extends FormRequest
     // }
 
     /**
-     * Check if the field is valid dataUrl
-     * 
-     * @param $attribute
-     * @param $value
-     * @param $parameters
-     * @param $validator
-     * @return Bool
-     */
-    private function dataUrlValidator($attribute, $value, $parameters, $validator)
-    {
-        $regex = '/^data:image\/(\w+);base64,/';
-
-        if (!is_string($value) || !preg_match($regex, $value)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -46,24 +26,20 @@ class ProductUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'id' => [
-                'required',
-                'integer',
-                'exists:products,id'
-            ],
             'name' => [
+                'required',
                 'string',
                 'max:255'
             ],
             'description' => [
-                'string',
                 'max:500'
             ],
             'price' => [
+                'required',
                 'numeric'
             ],
             'customfields' => [
-                'string',
+                'json',
             ],
         ];
     }

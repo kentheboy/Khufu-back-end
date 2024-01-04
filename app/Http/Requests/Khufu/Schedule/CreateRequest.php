@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Khufu;
+namespace App\Http\Requests\Khufu\Schedule;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ProductCreateRequest extends FormRequest
+class CreateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,15 +26,32 @@ class ProductCreateRequest extends FormRequest
     public function rules()
     {
         return [
+            'product_id' => [
+                'required',
+                'max:255'
+            ],
             'name' => [
                 'required',
                 'string',
                 'max:255'
             ],
-            'description' => [
-                'max:500'
+            'email' => [
+                'required',
+                'email',
+                'max:255'
             ],
-            'price' => [
+            'tel' => [
+                'required'
+            ],
+            'start_at' => [
+                'required',
+                'date_format:Y-m-d H:i'
+            ],
+            'end_at' => [
+                'required',
+                'date_format:Y-m-d H:i'
+            ],
+            'total_fee' => [
                 'required',
                 'numeric'
             ],

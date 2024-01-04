@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Khufu;
+namespace App\Http\Requests\Khufu\Schedule;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ProductReadRequest extends FormRequest
+class SearchRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -19,26 +19,6 @@ class ProductReadRequest extends FormRequest
     // }
 
     /**
-     * Check if the field is valid dataUrl
-     * 
-     * @param $attribute
-     * @param $value
-     * @param $parameters
-     * @param $validator
-     * @return Bool
-     */
-    private function dataUrlValidator($attribute, $value, $parameters, $validator)
-    {
-        $regex = '/^data:image\/(\w+);base64,/';
-
-        if (!is_string($value) || !preg_match($regex, $value)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -46,11 +26,15 @@ class ProductReadRequest extends FormRequest
     public function rules()
     {
         return [
-            'id' => [
+            
+            'start_at' => [
                 'required',
-                'integer',
-                'exists:products,id'
-            ]
+                'date_format:Y-m-d H:i'
+            ],
+            'end_at' => [
+                'required',
+                'date_format:Y-m-d H:i'
+            ],
         ];
     }
     

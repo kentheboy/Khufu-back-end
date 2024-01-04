@@ -8,14 +8,12 @@ use InvalidArgumentException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-use App\Http\Requests\Khufu\ProductCreateRequest;
-use App\Http\Requests\Khufu\ProductReadRequest;
-use App\Http\Requests\Khufu\ProductUpdateRequest;
+use App\Http\Requests\Khufu\Product\CreateRequest;
 use App\Models\Khufu\Product;
 
 class ProductsController extends Controller
 {
-    public function create(ProductCreateRequest $request){
+    public function create(CreateRequest $request){
 
         $name = $request->name;
         $description = $request->description;
@@ -59,7 +57,7 @@ class ProductsController extends Controller
             }
 
             try {
-                $imageValue = $this->getDataUrlFromFile('/public/uploads/' . $imageValue);
+                $imageValue = $this->getDataUrlFromFile('/uploads/' . $imageValue);
             } catch (Exception $e) {
                 return Log::error($e);
             }
@@ -83,7 +81,7 @@ class ProductsController extends Controller
             }
             
             try {
-                $dataUrl = $this->getDataUrlFromFile('/public/uploads/' . $images[0]);
+                $dataUrl = $this->getDataUrlFromFile('/uploads/' . $images[0]);
                 $product['main_image'] = $dataUrl;
             } catch (Exception $e) {
                 return Log::error($e);
@@ -157,7 +155,7 @@ class ProductsController extends Controller
     }
 
     private function getDataUrlFromFile($file_path, $mime = '') {
-        $data = Storage::get($file_path);
+        $data = Storage::disk('public')->get($file_path);
         $base64 = base64_encode($data);
         
         if (!isset($base64) || empty($base64)) {
@@ -184,7 +182,7 @@ class ProductsController extends Controller
     
         // Save the file
         $filename = uniqid() . '.' . explode('/', $mimeType)[1];
-        Storage::disk('local')->put('/public/uploads/' . $filename, $data);
+        Storage::disk('public')->put('/uploads/' . $filename, $data);
     
         // Store the filename back into the $dataUrls array
         $dataUrl = substr($filename, 0);
@@ -193,7 +191,7 @@ class ProductsController extends Controller
     }
 
     private function deleteImage($filename) {
-        Storage::disk('local')->delete('/public/uploads/' . $filename);
+        Storage::disk('public')->delete('/uploads/' . $filename);
     }
 
 }
