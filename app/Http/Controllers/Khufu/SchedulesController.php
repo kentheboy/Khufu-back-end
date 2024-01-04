@@ -107,7 +107,6 @@ class SchedulesController extends Controller
 
     private function sendAdminSlackNotice($messageContent)
     {
-        Log::info($messageContent);
         $client = new Client();
 
         $response = $client->post(env('SLACK_WEBHOOK_URL'), [
