@@ -31,7 +31,6 @@ class CreateRequest extends FormRequest
                 'max:255'
             ],
             'name' => [
-                'required',
                 'string',
                 'max:255'
             ],
@@ -41,7 +40,7 @@ class CreateRequest extends FormRequest
                 'max:255'
             ],
             'tel' => [
-                'required'
+                'regex:/[0-9]{7,13}/'
             ],
             'start_at' => [
                 'required',
