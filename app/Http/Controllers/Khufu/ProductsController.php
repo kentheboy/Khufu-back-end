@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use InvalidArgumentException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 use App\Http\Requests\Khufu\Product\CreateRequest;
 use App\Models\Khufu\Product;
@@ -18,6 +19,8 @@ class ProductsController extends Controller
         $name = $request->name;
         $description = $request->description;
         $price = $request->price;
+        $start_at = Carbon::parse($request->start_date);
+        $end_at = Carbon::parse($request->end_date);
         $customfields = $request->customfields;
         $dataUrls = json_decode($request->images);
 
@@ -31,11 +34,20 @@ class ProductsController extends Controller
             $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
         }
 
+        // if today is before the start date or after the end date, switch status to false(currently unavailable)
+        $status = 1;
+        $today = Carbon::today();
+        if (($start_at && $start_at->lte($today)) || ($end_at && $today->lte($end_at))) {
+            $status = 0;
+        }
+
         $newProduct = Product::create([
             'name' => $name,
             'description' => $description,
             'price' => $price,
-            'status' => 1,
+            'status' => $status,
+            'start_at' => $start_at,
+            'end_at' => $end_at,
             'customfields' => $customfields,
             'images' => json_encode($dataUrls),
         ]);
@@ -96,6 +108,8 @@ class ProductsController extends Controller
         $name = $request->name;
         $description = $request->description;
         $price = $request->price;
+        $start_at = Carbon::parse($request->start_date);
+        $end_at = Carbon::parse($request->end_date);
         $customfields = $request->customfields;
         $dataUrls = json_decode($request->images);
 
@@ -116,23 +130,38 @@ class ProductsController extends Controller
         
         // update the image file for each dataUrl
         foreach ($dataUrls as $key => &$dataUrl) {
-
+            
             if (!isset($dataUrl) || empty($dataUrl)) {
                 continue;
             }
             
             $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
         }
-
-
+        
+        
         $product->update([
             'name' => $name,
             'description' => $description,
             'price' => $price,
+            'start_at' => $start_at,
+            'end_at' => $end_at,
             'customfields' => $customfields,
             'images' => json_encode($dataUrls),
         ]);
-
+        
+        // if today is before the start date or after the end date, switch status to false(currently unavailable)
+        $today = Carbon::today();
+        if ($start_at || $end_at) {
+            $status = 1;
+            if ($start_at->lte($today) || $today->lte($end_at)) {
+                $status = 0;
+            }
+            $product->update([
+                'status' => $status,
+                'start_at' => $start_at,
+                'end_at' => $end_at,
+            ]);
+        }
         return $product;
     }
 
