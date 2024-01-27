@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 use App\Http\Requests\Khufu\Product\CreateRequest;
+use App\Http\Resources\Khufu\Product\ProductResource;
 use App\Models\Khufu\Product;
 
 class ProductsController extends Controller
@@ -100,7 +101,7 @@ class ProductsController extends Controller
             }
         }
 
-        return $products;
+        return ProductResource::collection($products);
     }
 
     public function update(Request $request){
