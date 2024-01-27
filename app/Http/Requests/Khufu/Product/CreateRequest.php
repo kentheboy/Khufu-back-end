@@ -38,14 +38,6 @@ class CreateRequest extends FormRequest
                 'required',
                 'numeric'
             ],
-            'stat_date' => [
-                'sometimes',
-                'date'
-            ],
-            'end_date' => [
-                'sometimes',
-                'date'
-            ],
             'customfields' => [
                 'json',
             ],
