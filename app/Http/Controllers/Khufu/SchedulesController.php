@@ -43,9 +43,9 @@ class SchedulesController extends Controller
         
         // get available products
         if ($returnType === 'id') {
-            return Product::whereNotIn('id', $bookedProducts)->pluck('id')->toArray();
+            return Product::whereNotIn('id', $bookedProducts)->whereNotIn('status', [0,2])->pluck('id')->toArray();
         }
-        return Product::whereNotIn('id', $bookedProducts)->get();
+        return Product::whereNotIn('id', $bookedProducts)->whereNotIn('status', [0,2])->get();
     }
     
     public function create(CreateRequest $request) {

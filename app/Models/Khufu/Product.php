@@ -16,6 +16,8 @@ class Product extends Model
         'images',
         'status',
         'price',
+        'start_at',
+        'end_at',
         'customfields'
     ];
 }
