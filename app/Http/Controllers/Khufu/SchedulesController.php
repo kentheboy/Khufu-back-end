@@ -25,9 +25,9 @@ class SchedulesController extends Controller
     }
     
     private function getAvailableProducts($start_at, $end_at, $returnType = null) {
-        // Format dates
-        $formattedStartAt = Carbon::createFromFormat('Y-m-d H:i', $start_at)->startOfDay();
-        $formattedEndAt = Carbon::createFromFormat('Y-m-d H:i', $end_at)->endOfDay();
+        // Format dateTimes
+        $formattedStartAt = Carbon::parse($start_at);
+        $formattedEndAt = Carbon::parse($end_at);
 
 
         // get booked product_ids
@@ -42,10 +42,23 @@ class SchedulesController extends Controller
                             ->pluck('product_id')->toArray();
         
         // get available products
+        $availableProductsQuery = Product::where(function ($query) use ($bookedProducts) {
+            $query->whereNotIn('id', $bookedProducts)
+                ->where('status', 1);
+        })
+        ->orWhere(function ($query) use ($formattedStartAt, $formattedEndAt){
+            $query->where('status', 0)
+                ->where('start_at', '<', $formattedStartAt)
+                ->where(function ($query) use ($formattedEndAt) {
+                    $query->where('end_at', '>', $formattedEndAt)
+                        ->orWhereNull('end_at');
+                });
+        });
+
         if ($returnType === 'id') {
-            return Product::whereNotIn('id', $bookedProducts)->whereNotIn('status', [0,2])->pluck('id')->toArray();
+            return $availableProductsQuery->pluck('id')->toArray();
         }
-        return Product::whereNotIn('id', $bookedProducts)->whereNotIn('status', [0,2])->get();
+        return $availableProductsQuery->get();
     }
     
     public function create(CreateRequest $request) {
