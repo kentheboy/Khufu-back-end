@@ -46,8 +46,9 @@ class SchedulesController extends Controller
             $query->whereNotIn('id', $bookedProducts)
                 ->where('status', 1);
         })
-        ->orWhere(function ($query) use ($formattedStartAt, $formattedEndAt){
+        ->orWhere(function ($query) use ($formattedStartAt, $formattedEndAt, $bookedProducts){
             $query->where('status', 0)
+                ->whereNotIn('id', $bookedProducts)
                 ->where('start_at', '<', $formattedStartAt)
                 ->where(function ($query) use ($formattedEndAt) {
                     $query->where('end_at', '>', $formattedEndAt)

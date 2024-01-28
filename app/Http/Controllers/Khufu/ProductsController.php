@@ -70,7 +70,7 @@ class ProductsController extends Controller
             }
 
             try {
-                $imageValue = $this->getDataUrlFromFile('/uploads/' . $imageValue);
+                $imageValue = Storage::disk('public')->url("/uploads/" . $imageValue);
             } catch (Exception $e) {
                 return Log::error($e);
             }
@@ -94,8 +94,7 @@ class ProductsController extends Controller
             }
             
             try {
-                $dataUrl = $this->getDataUrlFromFile('/uploads/' . $images[0]);
-                $product['main_image'] = $dataUrl;
+                $product['main_image'] = Storage::disk('public')->url("/uploads/" . $images[0]);
             } catch (Exception $e) {
                 return Log::error($e);
             }
@@ -116,27 +115,28 @@ class ProductsController extends Controller
 
         $product = Product::find($id);
 
-        // delete preexisting images
-        if (isset($product['images']) && !empty($product['images'])) {
-            $images = json_decode($product['images']);
-            
-            foreach ($images as $imageKey => &$filename) {
-                if (!isset($filename) || empty($filename)) {
-                    continue;
+        // update images if needed
+        $images = json_decode($product->images, true);
+        $isImageUpdated = false;
+        if (isset($dataUrls) && !empty($dataUrls)) {
+            $images = array_filter($images, function($value) {
+                return $value !== "\0";
+            });
+            // check requested images
+            foreach ($dataUrls as $key => $dataUrl) {
+                // if image updated
+                if (isset($dataUrl) && !empty($dataUrl) && substr($dataUrl, 0, 4) != "http") {
+                    if (isset($images[$key]) && !empty($images[$key])) {
+                        $this->deleteImage($images[$key]);
+                    }
+                    $images[$key] = $this->saveImageAndReturnFileName($dataUrl);
+                    $isImageUpdated = true;
                 }
-                $this->deleteImage($filename);
             }
-        }
-
-        
-        // update the image file for each dataUrl
-        foreach ($dataUrls as $key => &$dataUrl) {
-            
-            if (!isset($dataUrl) || empty($dataUrl)) {
-                continue;
+            if($isImageUpdated) {
+                $product->images = $images;
+                $product->save();
             }
-            
-            $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
         }
         
         
@@ -147,7 +147,6 @@ class ProductsController extends Controller
             'start_at' => $start_at,
             'end_at' => $end_at,
             'customfields' => $customfields,
-            'images' => json_encode($dataUrls),
         ]);
         
         // if today is before the start date or after the end date, switch status to false(currently unavailable)
@@ -184,20 +183,6 @@ class ProductsController extends Controller
         return Product::find($request->id)->delete();
     }
 
-    private function getDataUrlFromFile($file_path, $mime = '') {
-        $data = Storage::disk('public')->get($file_path);
-        $base64 = base64_encode($data);
-        
-        if (!isset($base64) || empty($base64)) {
-            Log::error([
-                'message' => 'The provided file path does not exist.',
-                'filePath' => $file_path
-            ]);
-            return null;
-        }
-
-        return 'data:' . $mime . ';base64,' . $base64;
-    }
 
     private function saveImageAndReturnFileName($dataUrl){
         // Split the data URL into its parts
