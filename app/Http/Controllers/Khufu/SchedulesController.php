@@ -102,8 +102,8 @@ class SchedulesController extends Controller
             'customfields' => json_encode([
                 "airportPickup" => $customfields->airportPickup,
                 "airportDropoff" => $customfields->airportDropoff,
-                "akamineStaDelivery" => $customfields->akamineStaDelivery,
-                "useOfChiledSheet" => $customfields->useOfChiledSheet
+                "akamineStaDelivery" => ($customfields->akamineStaDelivery) ? $customfields->akamineStaDelivery : null ,
+                "useOfChiledSheet" => ($customfields->useOfChiledSheet) ? $customfields->useOfChiledSheet : null
             ])
         ]);
 
