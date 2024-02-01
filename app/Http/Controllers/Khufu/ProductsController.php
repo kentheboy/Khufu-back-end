@@ -7,8 +7,10 @@ use Illuminate\Http\Request;
 use InvalidArgumentException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 use App\Http\Requests\Khufu\Product\CreateRequest;
+use App\Http\Resources\Khufu\Product\ProductResource;
 use App\Models\Khufu\Product;
 
 class ProductsController extends Controller
@@ -18,6 +20,8 @@ class ProductsController extends Controller
         $name = $request->name;
         $description = $request->description;
         $price = $request->price;
+        $start_at = Carbon::parse($request->start_date);
+        $end_at = Carbon::parse($request->end_date);
         $customfields = $request->customfields;
         $dataUrls = json_decode($request->images);
 
@@ -31,11 +35,20 @@ class ProductsController extends Controller
             $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
         }
 
+        // if today is before the start date or after the end date, switch status to false(currently unavailable)
+        $status = 1;
+        $today = Carbon::today();
+        if (($start_at && $start_at->lte($today)) || ($end_at && $today->lte($end_at))) {
+            $status = 0;
+        }
+
         $newProduct = Product::create([
             'name' => $name,
             'description' => $description,
             'price' => $price,
-            'status' => 1,
+            'status' => $status,
+            'start_at' => $start_at,
+            'end_at' => $end_at,
             'customfields' => $customfields,
             'images' => json_encode($dataUrls),
         ]);
@@ -57,7 +70,7 @@ class ProductsController extends Controller
             }
 
             try {
-                $imageValue = $this->getDataUrlFromFile('/uploads/' . $imageValue);
+                $imageValue = Storage::disk('public')->url("/uploads/" . $imageValue);
             } catch (Exception $e) {
                 return Log::error($e);
             }
@@ -81,14 +94,13 @@ class ProductsController extends Controller
             }
             
             try {
-                $dataUrl = $this->getDataUrlFromFile('/uploads/' . $images[0]);
-                $product['main_image'] = $dataUrl;
+                $product['main_image'] = Storage::disk('public')->url("/uploads/" . $images[0]);
             } catch (Exception $e) {
                 return Log::error($e);
             }
         }
 
-        return $products;
+        return ProductResource::collection($products);
     }
 
     public function update(Request $request){
@@ -96,43 +108,60 @@ class ProductsController extends Controller
         $name = $request->name;
         $description = $request->description;
         $price = $request->price;
+        $start_at = Carbon::parse($request->start_date);
+        $end_at = Carbon::parse($request->end_date);
         $customfields = $request->customfields;
         $dataUrls = json_decode($request->images);
 
         $product = Product::find($id);
 
-        // delete preexisting images
-        if (isset($product['images']) && !empty($product['images'])) {
-            $images = json_decode($product['images']);
-            
-            foreach ($images as $imageKey => &$filename) {
-                if (!isset($filename) || empty($filename)) {
-                    continue;
+        // update images if needed
+        $images = json_decode($product->images, true);
+        $isImageUpdated = false;
+        if (isset($dataUrls) && !empty($dataUrls)) {
+            $images = array_filter($images, function($value) {
+                return $value !== "\0";
+            });
+            // check requested images
+            foreach ($dataUrls as $key => $dataUrl) {
+                // if image updated
+                if (isset($dataUrl) && !empty($dataUrl) && substr($dataUrl, 0, 4) != "http") {
+                    if (isset($images[$key]) && !empty($images[$key])) {
+                        $this->deleteImage($images[$key]);
+                    }
+                    $images[$key] = $this->saveImageAndReturnFileName($dataUrl);
+                    $isImageUpdated = true;
                 }
-                $this->deleteImage($filename);
+            }
+            if($isImageUpdated) {
+                $product->images = $images;
+                $product->save();
             }
         }
-
         
-        // update the image file for each dataUrl
-        foreach ($dataUrls as $key => &$dataUrl) {
-
-            if (!isset($dataUrl) || empty($dataUrl)) {
-                continue;
-            }
-            
-            $dataUrl = $this->saveImageAndReturnFileName($dataUrl);
-        }
-
-
+        
         $product->update([
             'name' => $name,
             'description' => $description,
             'price' => $price,
+            'start_at' => $start_at,
+            'end_at' => $end_at,
             'customfields' => $customfields,
-            'images' => json_encode($dataUrls),
         ]);
-
+        
+        // if today is before the start date or after the end date, switch status to false(currently unavailable)
+        $today = Carbon::today();
+        if ($start_at || $end_at) {
+            $status = 1;
+            if ($start_at->lte($today) || $today->lte($end_at)) {
+                $status = 0;
+            }
+            $product->update([
+                'status' => $status,
+                'start_at' => $start_at,
+                'end_at' => $end_at,
+            ]);
+        }
         return $product;
     }
 
@@ -154,20 +183,6 @@ class ProductsController extends Controller
         return Product::find($request->id)->delete();
     }
 
-    private function getDataUrlFromFile($file_path, $mime = '') {
-        $data = Storage::disk('public')->get($file_path);
-        $base64 = base64_encode($data);
-        
-        if (!isset($base64) || empty($base64)) {
-            Log::error([
-                'message' => 'The provided file path does not exist.',
-                'filePath' => $file_path
-            ]);
-            return null;
-        }
-
-        return 'data:' . $mime . ';base64,' . $base64;
-    }
 
     private function saveImageAndReturnFileName($dataUrl){
         // Split the data URL into its parts

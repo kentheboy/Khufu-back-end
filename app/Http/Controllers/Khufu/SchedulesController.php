@@ -25,9 +25,9 @@ class SchedulesController extends Controller
     }
     
     private function getAvailableProducts($start_at, $end_at, $returnType = null) {
-        // Format dates
-        $formattedStartAt = Carbon::createFromFormat('Y-m-d H:i', $start_at)->startOfDay();
-        $formattedEndAt = Carbon::createFromFormat('Y-m-d H:i', $end_at)->endOfDay();
+        // Format dateTimes
+        $formattedStartAt = Carbon::parse($start_at);
+        $formattedEndAt = Carbon::parse($end_at);
 
 
         // get booked product_ids
@@ -42,10 +42,24 @@ class SchedulesController extends Controller
                             ->pluck('product_id')->toArray();
         
         // get available products
+        $availableProductsQuery = Product::where(function ($query) use ($bookedProducts) {
+            $query->whereNotIn('id', $bookedProducts)
+                ->where('status', 1);
+        })
+        ->orWhere(function ($query) use ($formattedStartAt, $formattedEndAt, $bookedProducts){
+            $query->where('status', 0)
+                ->whereNotIn('id', $bookedProducts)
+                ->where('start_at', '<', $formattedStartAt)
+                ->where(function ($query) use ($formattedEndAt) {
+                    $query->where('end_at', '>', $formattedEndAt)
+                        ->orWhereNull('end_at');
+                });
+        });
+
         if ($returnType === 'id') {
-            return Product::whereNotIn('id', $bookedProducts)->pluck('id')->toArray();
+            return $availableProductsQuery->pluck('id')->toArray();
         }
-        return Product::whereNotIn('id', $bookedProducts)->get();
+        return $availableProductsQuery->get();
     }
     
     public function create(CreateRequest $request) {
@@ -87,11 +101,16 @@ class SchedulesController extends Controller
             'total_fee' => $total_fee,
             'customfields' => json_encode([
                 "airportPickup" => $customfields->airportPickup,
-                "airportDropoff" => $customfields->airportDropoff 
+                "airportDropoff" => $customfields->airportDropoff,
+                "akamineStaDelivery" => ($customfields->akamineStaDelivery) ? $customfields->akamineStaDelivery : null ,
+                "useOfChiledSheet" => ($customfields->useOfChiledSheet) ? $customfields->useOfChiledSheet : null
             ])
         ]);
 
         $productInfo = Product::find($scheduleInfo->product_id);
+
+        $optionTextAkamineStaDelivery = $customfields->akamineStaDelivery ? "あり" : "なし";
+        $optionTextUseOfChildSheet = $customfields->useOfChiledSheet == 1 ? "ベビーシートあり" : ($customfields->useOfChiledSheet == 2 ? "ジュニアシートあり" : "なし");
 
         $this->sendAdminSlackNotice([
             "type" => "mrkdwn",
@@ -99,6 +118,7 @@ class SchedulesController extends Controller
                 \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>空港お出迎え時刻：$customfields->airportPickup\n>空港お見送り時刻：$customfields->airportDropoff
                 \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n>免許証番号：$customfields->licenseNumber\n>生年月日：$customfields->dob
                 \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name
+                \n*オプション情報*:\n>赤嶺駅貸出： $optionTextAkamineStaDelivery\n>チャイルドシート：$optionTextUseOfChildSheet
                 \nfrom： ".env('APP_URL')
         ]);
 
