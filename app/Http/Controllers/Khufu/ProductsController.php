@@ -103,6 +103,28 @@ class ProductsController extends Controller
         return ProductResource::collection($products);
     }
 
+    public function productListForCustomer() {
+        $products =  Product::where('status', 1)->get();
+
+        // Get only first image's dataUrl
+        foreach($products as $product) {
+            $images = json_decode($product['images']);
+            
+            if (!isset($images[0]) && empty($images[0])) {
+                $product['main_image'] = null;
+                continue;
+            }
+            
+            try {
+                $product['main_image'] = Storage::disk('public')->url("/uploads/" . $images[0]);
+            } catch (Exception $e) {
+                return Log::error($e);
+            }
+        }
+
+        return ProductResource::collection($products);
+    }
+
     public function update(Request $request){
         $id = $request->id;
         $name = $request->name;
