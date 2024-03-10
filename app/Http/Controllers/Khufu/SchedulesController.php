@@ -102,20 +102,36 @@ class SchedulesController extends Controller
             'customfields' => json_encode([
                 "airportPickup" => $customfields->airportPickup,
                 "airportDropoff" => $customfields->airportDropoff,
-                "akamineStaDelivery" => ($customfields->akamineStaDelivery) ? $customfields->akamineStaDelivery : null,
-                "nahaHotelDelivery" => ($customfields->nahaHotelDelivery) ? $customfields->nahaHotelDelivery : null,
-                "akamineStaReturn" => ($customfields->akamineStaReturn) ? $customfields->akamineStaReturn : null,
-                "nahaHotelReturn" => ($customfields->nahaHotelReturn) ? $customfields->nahaHotelReturn : null,
+                "deliveryOption" => ($customfields->deliveryOption) ? $customfields->deliveryOption : null,
+                "returnOption" => ($customfields->returnOption) ? $customfields->returnOption : null,
                 "useOfChiledSheet" => ($customfields->useOfChiledSheet) ? $customfields->useOfChiledSheet : null
             ])
         ]);
 
         $productInfo = Product::find($scheduleInfo->product_id);
 
-        $optionTextAkamineStaDelivery = $customfields->akamineStaDelivery ? "あり" : "なし";
-        $optionTextNahaHotelDelivery = $customfields->nahaHotelDelivery ? "あり" : "なし";
-        $optionTextAkamineStaReturn = $customfields->akamineStaReturn ? "あり" : "なし";
-        $optionTextNahaHotelReturn = $customfields->nahaHotelReturn ? "あり" : "なし";
+        switch($customfields->deliveryOption){
+            case 1:
+                $optionTextDeliveryOption = "赤嶺駅貸出";
+                break;
+            case 2:
+                $optionTextDeliveryOption = "那覇市内ホテル貸出";
+                break;
+            default:
+                $optionTextDeliveryOption = "特になし";
+                break;
+        }
+        switch($customfields->returnOption){
+            case 1:
+                $optionTextReturnOption = "赤嶺駅返却";
+                break;
+            case 2:
+                $optionTextReturnOption = "那覇市内ホテル返却";
+                break;
+            default:
+                $optionTextReturnOption = "特になし";
+                break;
+        }
         switch($customfields->useOfChiledSheet){
             case 1:
                 $optionTextUseOfChildSheet = "ベビーシートあり";
@@ -137,7 +153,7 @@ class SchedulesController extends Controller
                 \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>空港お出迎え時刻：$customfields->airportPickup\n>空港お見送り時刻：$customfields->airportDropoff\n>予約内容合計金額：$scheduleInfo->total_fee
                 \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n>免許証番号：$customfields->licenseNumber\n>生年月日：$customfields->dob
                 \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name
-                \n*オプション情報*:\n>赤嶺駅貸出： $optionTextAkamineStaDelivery\n>那覇市内ホテル貸出： $optionTextNahaHotelDelivery\n>赤嶺駅返却： $optionTextAkamineStaReturn\n>那覇市内ホテル返却： $optionTextNahaHotelReturn\n>チャイルドシート：$optionTextUseOfChildSheet
+                \n*オプション情報*:\n>貸出オプション： $optionTextDeliveryOption\n>返却オプション： $optionTextReturnOption\n>チャイルドシート：$optionTextUseOfChildSheet
                 \nfrom： ".env('APP_URL')
         ]);
 
