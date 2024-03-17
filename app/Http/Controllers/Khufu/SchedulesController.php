@@ -104,7 +104,9 @@ class SchedulesController extends Controller
                 "airportDropoff" => $customfields->airportDropoff,
                 "deliveryOption" => ($customfields->deliveryOption) ? $customfields->deliveryOption : null,
                 "returnOption" => ($customfields->returnOption) ? $customfields->returnOption : null,
-                "useOfChiledSheet" => ($customfields->useOfChiledSheet) ? $customfields->useOfChiledSheet : null
+                "useOfBabySheet" => $customfields->useOfBabySheet,
+                "useOfChildSheet" => $customfields->useOfChildSheet,
+                "useOfJuniorSheet" => $customfields->useOfJuniorSheet
             ])
         ]);
 
@@ -132,20 +134,9 @@ class SchedulesController extends Controller
                 $optionTextReturnOption = "特になし";
                 break;
         }
-        switch($customfields->useOfChiledSheet){
-            case 1:
-                $optionTextUseOfChildSheet = "ベビーシートあり";
-                break;
-            case 2:
-                $optionTextUseOfChildSheet = "ジュニアシートあり";
-                break;
-            case 3:
-                $optionTextUseOfChildSheet = "チャイルドシートあり";
-                break;
-            default:
-                $optionTextUseOfChildSheet = "なし";
-                break;
-        }
+        $optionTextUseOfBabySheet = "{$customfields->useOfBabySheet}台";
+        $optionTextUseOfChildSheet = "{$customfields->useOfChildSheet}台";
+        $optionTextUseOfJuniorSheet = "{$customfields->useOfJuniorSheet}台";
 
         $this->sendAdminSlackNotice([
             "type" => "mrkdwn",
@@ -153,7 +144,7 @@ class SchedulesController extends Controller
                 \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>空港お出迎え時刻：$customfields->airportPickup\n>空港お見送り時刻：$customfields->airportDropoff\n>予約内容合計金額：$scheduleInfo->total_fee
                 \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n>免許証番号：$customfields->licenseNumber\n>生年月日：$customfields->dob
                 \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name
-                \n*オプション情報*:\n>貸出オプション： $optionTextDeliveryOption\n>返却オプション： $optionTextReturnOption\n>チャイルドシート：$optionTextUseOfChildSheet
+                \n*オプション情報*:\n>貸出オプション： $optionTextDeliveryOption\n>返却オプション： $optionTextReturnOption\n>ベビーシート：$optionTextUseOfBabySheet\n>チャイルドシート：$optionTextUseOfChildSheet\n>ジュニアシート：$optionTextUseOfJuniorSheet
                 \nfrom： ".env('APP_URL')
         ]);
 
