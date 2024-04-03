@@ -102,23 +102,49 @@ class SchedulesController extends Controller
             'customfields' => json_encode([
                 "airportPickup" => $customfields->airportPickup,
                 "airportDropoff" => $customfields->airportDropoff,
-                "akamineStaDelivery" => ($customfields->akamineStaDelivery) ? $customfields->akamineStaDelivery : null ,
-                "useOfChiledSheet" => ($customfields->useOfChiledSheet) ? $customfields->useOfChiledSheet : null
+                "deliveryOption" => ($customfields->deliveryOption) ? $customfields->deliveryOption : null,
+                "returnOption" => ($customfields->returnOption) ? $customfields->returnOption : null,
+                "useOfBabySheet" => $customfields->useOfBabySheet,
+                "useOfChildSheet" => $customfields->useOfChildSheet,
+                "useOfJuniorSheet" => $customfields->useOfJuniorSheet
             ])
         ]);
 
         $productInfo = Product::find($scheduleInfo->product_id);
 
-        $optionTextAkamineStaDelivery = $customfields->akamineStaDelivery ? "あり" : "なし";
-        $optionTextUseOfChildSheet = $customfields->useOfChiledSheet == 1 ? "ベビーシートあり" : ($customfields->useOfChiledSheet == 2 ? "ジュニアシートあり" : "なし");
+        switch($customfields->deliveryOption){
+            case 1:
+                $optionTextDeliveryOption = "赤嶺駅貸出";
+                break;
+            case 2:
+                $optionTextDeliveryOption = "那覇市内ホテル貸出";
+                break;
+            default:
+                $optionTextDeliveryOption = "特になし";
+                break;
+        }
+        switch($customfields->returnOption){
+            case 1:
+                $optionTextReturnOption = "赤嶺駅返却";
+                break;
+            case 2:
+                $optionTextReturnOption = "那覇市内ホテル返却";
+                break;
+            default:
+                $optionTextReturnOption = "特になし";
+                break;
+        }
+        $optionTextUseOfBabySheet = "{$customfields->useOfBabySheet}台";
+        $optionTextUseOfChildSheet = "{$customfields->useOfChildSheet}台";
+        $optionTextUseOfJuniorSheet = "{$customfields->useOfJuniorSheet}台";
 
         $this->sendAdminSlackNotice([
             "type" => "mrkdwn",
             "text" => "<!channel> 予約が入りました！
-                \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>空港お出迎え時刻：$customfields->airportPickup\n>空港お見送り時刻：$customfields->airportDropoff
+                \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>空港お出迎え時刻：$customfields->airportPickup\n>空港お見送り時刻：$customfields->airportDropoff\n>予約内容合計金額：$scheduleInfo->total_fee
                 \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n>免許証番号：$customfields->licenseNumber\n>生年月日：$customfields->dob
                 \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name
-                \n*オプション情報*:\n>赤嶺駅貸出： $optionTextAkamineStaDelivery\n>チャイルドシート：$optionTextUseOfChildSheet
+                \n*オプション情報*:\n>貸出オプション： $optionTextDeliveryOption\n>返却オプション： $optionTextReturnOption\n>ベビーシート：$optionTextUseOfBabySheet\n>チャイルドシート：$optionTextUseOfChildSheet\n>ジュニアシート：$optionTextUseOfJuniorSheet
                 \nfrom： ".env('APP_URL')
         ]);
 
