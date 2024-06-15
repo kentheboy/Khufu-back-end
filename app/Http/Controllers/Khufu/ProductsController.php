@@ -15,7 +15,8 @@ use App\Models\Khufu\Product;
 
 class ProductsController extends Controller
 {
-    public function create(CreateRequest $request){
+    public function create(CreateRequest $request)
+    {
 
         $name = $request->name;
         $description = $request->description;
@@ -56,7 +57,8 @@ class ProductsController extends Controller
         return $newProduct;
     }
 
-    public function read(Request $request){
+    public function read(Request $request)
+    {
         $product = Product::find($request->id);
         if (!isset($product['images']) || empty($product['images'])) {
             return $product;
@@ -81,18 +83,19 @@ class ProductsController extends Controller
         return $product;
     }
 
-    public function index() {
+    public function index()
+    {
         $products =  Product::all();
 
         // Get only first image's dataUrl
-        foreach($products as $product) {
+        foreach ($products as $product) {
             $images = json_decode($product['images']);
-            
+
             if (!isset($images[0]) && empty($images[0])) {
                 $product['main_image'] = null;
                 continue;
             }
-            
+
             try {
                 $product['main_image'] = Storage::disk('public')->url("/uploads/" . $images[0]);
             } catch (Exception $e) {
@@ -103,18 +106,19 @@ class ProductsController extends Controller
         return ProductResource::collection($products);
     }
 
-    public function productListForCustomer() {
+    public function productListForCustomer()
+    {
         $products =  Product::where('status', 1)->get();
 
         // Get only first image's dataUrl
-        foreach($products as $product) {
+        foreach ($products as $product) {
             $images = json_decode($product['images']);
-            
+
             if (!isset($images[0]) && empty($images[0])) {
                 $product['main_image'] = null;
                 continue;
             }
-            
+
             try {
                 $product['main_image'] = Storage::disk('public')->url("/uploads/" . $images[0]);
             } catch (Exception $e) {
@@ -125,7 +129,8 @@ class ProductsController extends Controller
         return ProductResource::collection($products);
     }
 
-    public function update(Request $request){
+    public function update(Request $request)
+    {
         $id = $request->id;
         $name = $request->name;
         $description = $request->description;
@@ -141,7 +146,7 @@ class ProductsController extends Controller
         $images = json_decode($product->images, true);
         $isImageUpdated = false;
         if (isset($dataUrls) && !empty($dataUrls)) {
-            $images = array_filter($images, function($value) {
+            $images = array_filter($images, function ($value) {
                 return $value !== "\0";
             });
             // check requested images
@@ -155,13 +160,13 @@ class ProductsController extends Controller
                     $isImageUpdated = true;
                 }
             }
-            if($isImageUpdated) {
+            if ($isImageUpdated) {
                 $product->images = $images;
                 $product->save();
             }
         }
-        
-        
+
+
         $product->update([
             'name' => $name,
             'description' => $description,
@@ -170,7 +175,7 @@ class ProductsController extends Controller
             'end_at' => $end_at,
             'customfields' => $customfields,
         ]);
-        
+
         // if today is before the start date or after the end date, switch status to false(currently unavailable)
         $today = Carbon::today();
         if ($start_at || $end_at) {
@@ -187,13 +192,14 @@ class ProductsController extends Controller
         return $product;
     }
 
-    public function delete(Request $request){
+    public function delete(Request $request)
+    {
         $product = Product::find($request->id);
 
         // delete preexisting images
         if (isset($product['images']) && !empty($product['images'])) {
             $images = json_decode($product['images']);
-            
+
             foreach ($images as $imageKey => &$filename) {
                 if (!isset($filename) || empty($filename)) {
                     continue;
@@ -206,29 +212,30 @@ class ProductsController extends Controller
     }
 
 
-    private function saveImageAndReturnFileName($dataUrl){
+    private function saveImageAndReturnFileName($dataUrl)
+    {
         // Split the data URL into its parts
         $parts = explode(',', $dataUrl);
-    
+
         // Extract the mime type and the base64 encoded data
         $mimeType = explode(';', $parts[0])[0];
         $base64Data = $parts[1];
-    
+
         // Decode the base64 encoded data
         $data = base64_decode($base64Data);
-    
+
         // Save the file
         $filename = uniqid() . '.' . explode('/', $mimeType)[1];
         Storage::disk('public')->put('/uploads/' . $filename, $data);
-    
+
         // Store the filename back into the $dataUrls array
         $dataUrl = substr($filename, 0);
 
         return $dataUrl;
     }
 
-    private function deleteImage($filename) {
+    private function deleteImage($filename)
+    {
         Storage::disk('public')->delete('/uploads/' . $filename);
     }
-
 }
