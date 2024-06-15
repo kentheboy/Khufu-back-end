@@ -30,16 +30,18 @@ class SchedulesController extends Controller
         // Format dateTimes
         $formattedStartAt = Carbon::parse($start_at);
         $formattedEndAt = Carbon::parse($end_at);
+        $formattedStartOfDay = Carbon::parse($start_at)->startOfDay();
+        $formattedEndOfDat = Carbon::parse($end_at)->endOfDay();
 
 
         // get booked product_ids
-        $bookedProducts = Schedule::where(function ($query) use ($formattedStartAt, $formattedEndAt) {
-            $query->whereBetween('start_at', [$formattedStartAt, $formattedEndAt])
-                ->orWhereBetween('end_at', [$formattedStartAt, $formattedEndAt]);
+        $bookedProducts = Schedule::where(function ($query) use ($formattedStartOfDay, $formattedEndOfDat) {
+            $query->whereBetween('start_at', [$formattedStartOfDay, $formattedEndOfDat])
+                ->orWhereBetween('end_at', [$formattedStartOfDay, $formattedEndOfDat]);
         })
-            ->orWhere(function ($query) use ($formattedStartAt, $formattedEndAt) {
-                $query->where('start_at', '<', $formattedStartAt)
-                    ->where('end_at', '>', $formattedEndAt);
+            ->orWhere(function ($query) use ($formattedStartOfDay, $formattedEndOfDat) {
+                $query->where('start_at', '<', $formattedStartOfDay)
+                    ->where('end_at', '>', $formattedEndOfDat);
             })
             ->pluck('product_id')->toArray();
 
