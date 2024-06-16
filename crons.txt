@@ -1,0 +1,9 @@
+# env: Dev
+# khufu B/E crons
+## product publish stauts toggle
+0 0 * * * root cd /var/www/html/khufu-back-end && php artisan schedule:run >> /dev/null 2>&1
+
+# env: prod
+# khufu B/E crons
+## product publish stauts toggle
+0 0 * * * root cd /var/www/html/api.class-rental-car.com/khufu-back-end && php artisan schedule:run >> /dev/null 2>&1
