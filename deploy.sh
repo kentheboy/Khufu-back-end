@@ -16,9 +16,9 @@ php artisan migrate --force
 echo "php artisan optimize"
 php artisan optimize
 
-echo "php artisan config:cache \n php artisan config:clear"
-php artisan config:cache
-php artisan config:clear
+echo "sudo php artisan config:cache \n sudo php artisan config:clear"
+sudo php artisan config:cache
+sudo php artisan config:clear
 
 echo "php artisan view:clear"
 php artisan view:clear
