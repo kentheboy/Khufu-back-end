@@ -40,16 +40,16 @@ class SchedulesController extends Controller
                 ->orWhereBetween('end_at', [$formattedStartOfDay, $formattedEndOfDay]);
         })
             ->orWhere(function ($query) use ($formattedStartOfDay, $formattedEndOfDay) {
-                $query->where('start_at', '<', $formattedStartOfDay)
-                    ->where('end_at', '>', $formattedEndOfDay);
+                $query->where('start_at', '<=', $formattedStartOfDay)
+                    ->where('end_at', '>=', $formattedEndOfDay);
             })
             ->pluck('product_id')->toArray();
 
         // get available products
         $availableProductsQuery = Product::whereNotIn('id', $bookedProducts)
-            ->where('start_at', '<', $formattedStartOfDay)
+            ->where('start_at', '<=', $formattedStartOfDay)
             ->where(function ($query) use ($formattedEndOfDay) {
-                $query->where('end_at', '>', $formattedEndOfDay)
+                $query->where('end_at', '>=', $formattedEndOfDay)
                     ->orWhereNull('end_at');
             });
         Log::debug(json_encode($availableProductsQuery));
