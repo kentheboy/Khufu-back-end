@@ -49,6 +49,10 @@ class SchedulesController extends Controller
             ->where(function ($query) use ($formattedEndOfDay) {
                 $query->where('end_at', '>=', $formattedEndOfDay)
                     ->orWhereNull('end_at');
+            })
+            ->where(function ($query) use ($formattedStartOfDay, $formattedEndOfDay) {
+                $query->where('end_at', '>', $formattedStartOfDay)
+                      ->orWhere('start_at', '>', $formattedEndOfDay);
             });
 
         if ($returnType === 'id') {
