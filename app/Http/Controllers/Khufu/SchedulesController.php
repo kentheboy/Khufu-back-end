@@ -31,34 +31,28 @@ class SchedulesController extends Controller
         $formattedStartAt = Carbon::parse($start_at);
         $formattedEndAt = Carbon::parse($end_at);
         $formattedStartOfDay = Carbon::parse($start_at)->startOfDay();
-        $formattedEndOfDat = Carbon::parse($end_at)->endOfDay();
+        $formattedEndOfDay = Carbon::parse($end_at)->endOfDay();
 
 
         // get booked product_ids
-        $bookedProducts = Schedule::where(function ($query) use ($formattedStartOfDay, $formattedEndOfDat) {
-            $query->whereBetween('start_at', [$formattedStartOfDay, $formattedEndOfDat])
-                ->orWhereBetween('end_at', [$formattedStartOfDay, $formattedEndOfDat]);
+        $bookedProducts = Schedule::where(function ($query) use ($formattedStartOfDay, $formattedEndOfDay) {
+            $query->whereBetween('start_at', [$formattedStartOfDay, $formattedEndOfDay])
+                ->orWhereBetween('end_at', [$formattedStartOfDay, $formattedEndOfDay]);
         })
-            ->orWhere(function ($query) use ($formattedStartOfDay, $formattedEndOfDat) {
+            ->orWhere(function ($query) use ($formattedStartOfDay, $formattedEndOfDay) {
                 $query->where('start_at', '<', $formattedStartOfDay)
-                    ->where('end_at', '>', $formattedEndOfDat);
+                    ->where('end_at', '>', $formattedEndOfDay);
             })
             ->pluck('product_id')->toArray();
 
         // get available products
-        $availableProductsQuery = Product::where(function ($query) use ($bookedProducts) {
-            $query->whereNotIn('id', $bookedProducts)
-                ->where('status', 1);
-        })
-            ->orWhere(function ($query) use ($formattedStartAt, $formattedEndAt, $bookedProducts) {
-                $query->where('status', 0)
-                    ->whereNotIn('id', $bookedProducts)
-                    ->where('start_at', '<', $formattedStartAt)
-                    ->where(function ($query) use ($formattedEndAt) {
-                        $query->where('end_at', '>', $formattedEndAt)
-                            ->orWhereNull('end_at');
-                    });
+        $availableProductsQuery = Product::whereNotIn('id', $bookedProducts)
+            ->where('start_at', '<', $formattedStartOfDay)
+            ->where(function ($query) use ($formattedEndOfDay) {
+                $query->where('end_at', '>', $formattedEndOfDay)
+                    ->orWhereNull('end_at');
             });
+        Log::debug(json_encode($availableProductsQuery));
 
         if ($returnType === 'id') {
             return $availableProductsQuery->pluck('id')->toArray();
