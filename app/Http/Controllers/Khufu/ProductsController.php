@@ -206,7 +206,7 @@ class ProductsController extends Controller
             $product->status = 1;
         }
 
-        return $product->save();
+        return $product->save() ? $product->status : json_encode(['msg' => 'DBエラー']);
     }
 
 
