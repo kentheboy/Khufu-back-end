@@ -30,6 +30,7 @@ Route::get('/customer/products', [ProductsController::class, 'productListForCust
 Route::get('/products/{id}', [ProductsController::class, 'read']);
 Route::patch('/products/{id}', [ProductsController::class, 'update']);
 Route::delete('/products/{id}', [ProductsController::class, 'delete']);
+Route::patch('/products/status/{id}', [ProductsController::class, 'toggleStatus']);
 
 // Khufu ScheduleTable
 Route::get('/schedule/search', [SchedulesController::class, 'search']);

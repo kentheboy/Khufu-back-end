@@ -197,6 +197,18 @@ class ProductsController extends Controller
         return Product::find($request->id)->delete();
     }
 
+    public function toggleStatus(Request $request) {
+        $product = Product::find($request->id);
+
+        if ($product->status) {
+            $product->status = 0;
+        } else {
+            $product->status = 1;
+        }
+
+        return $product->save();
+    }
+
 
     private function saveImageAndReturnFileName($dataUrl)
     {
