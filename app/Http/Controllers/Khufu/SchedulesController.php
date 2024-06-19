@@ -28,10 +28,8 @@ class SchedulesController extends Controller
     private function getAvailableProducts($start_at, $end_at, $returnType = null)
     {
         // Format dateTimes
-        $formattedStartAt = Carbon::parse($start_at);
-        $formattedEndAt = Carbon::parse($end_at);
-        $formattedStartOfDay = Carbon::parse($start_at)->startOfDay();
-        $formattedEndOfDay = Carbon::parse($end_at)->endOfDay();
+        $formattedStartOfDay = Carbon::parse($start_at)->toDateString();
+        $formattedEndOfDay = Carbon::parse($end_at)->toDateString();
 
 
         // get booked product_ids
@@ -52,7 +50,6 @@ class SchedulesController extends Controller
                 $query->where('end_at', '>=', $formattedEndOfDay)
                     ->orWhereNull('end_at');
             });
-        Log::debug(json_encode($availableProductsQuery));
 
         if ($returnType === 'id') {
             return $availableProductsQuery->pluck('id')->toArray();
