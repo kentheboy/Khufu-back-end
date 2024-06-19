@@ -45,6 +45,7 @@ class SchedulesController extends Controller
 
         // get available products
         $availableProductsQuery = Product::whereNotIn('id', $bookedProducts)
+            ->where('status', 1)
             ->where('start_at', '<=', $formattedStartOfDay)
             ->where(function ($query) use ($formattedEndOfDay) {
                 $query->where('end_at', '>=', $formattedEndOfDay)
