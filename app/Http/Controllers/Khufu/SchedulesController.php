@@ -149,7 +149,7 @@ class SchedulesController extends Controller
     {
         $client = new Client();
 
-        $response = $client->post(env('SLACK_WEBHOOK_URL'), [
+        $response = $client->post(config('services.slack.webhook_url'), [
             'json' => $messageContent,
         ]);
 
