@@ -35,4 +35,9 @@ return [
         'webhook_url' => env('SLACK_WEBHOOK_URL'),
     ],
 
+    'app' => [
+        'env' => env('APP_ENV'),
+        'url' => env('APP_URL'),
+    ]
+
 ];
