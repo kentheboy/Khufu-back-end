@@ -38,10 +38,10 @@ class ProductsController extends Controller
 
         // if today is before the start date or after the end date, switch status to false(currently unavailable)
         $status = 1;
-        $today = Carbon::today();
-        if (($start_at && $start_at->gt($today)) || ($end_at && $today->gt($end_at))) {
-            $status = 0;
-        }
+        // $today = Carbon::today();
+        // if (($start_at && $start_at->gt($today)) || ($end_at && $today->gt($end_at))) {
+        //     $status = 0;
+        // }
 
         $newProduct = Product::create([
             'name' => $name,
@@ -175,20 +175,6 @@ class ProductsController extends Controller
             'end_at' => $end_at,
             'customfields' => $customfields,
         ]);
-
-        // if today is before the start date or after the end date, switch status to false(currently unavailable)
-        $today = Carbon::today();
-        if ($start_at || $end_at) {
-            $status = 1;
-            if ($start_at->gt($today) || $today->gt($end_at)) {
-                $status = 0;
-            }
-            $product->update([
-                'status' => $status,
-                'start_at' => $start_at,
-                'end_at' => $end_at,
-            ]);
-        }
         return $product;
     }
 
@@ -209,6 +195,18 @@ class ProductsController extends Controller
         }
 
         return Product::find($request->id)->delete();
+    }
+
+    public function toggleStatus(Request $request) {
+        $product = Product::find($request->id);
+
+        if ($product->status) {
+            $product->status = 0;
+        } else {
+            $product->status = 1;
+        }
+
+        return $product->save() ? $product->status : json_encode(['msg' => 'DBエラー']);
     }
 
 

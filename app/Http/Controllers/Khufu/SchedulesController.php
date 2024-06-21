@@ -28,36 +28,32 @@ class SchedulesController extends Controller
     private function getAvailableProducts($start_at, $end_at, $returnType = null)
     {
         // Format dateTimes
-        $formattedStartAt = Carbon::parse($start_at);
-        $formattedEndAt = Carbon::parse($end_at);
-        $formattedStartOfDay = Carbon::parse($start_at)->startOfDay();
-        $formattedEndOfDat = Carbon::parse($end_at)->endOfDay();
+        $formattedStartOfDay = Carbon::parse($start_at)->toDateString();
+        $formattedEndOfDay = Carbon::parse($end_at)->toDateString();
 
 
         // get booked product_ids
-        $bookedProducts = Schedule::where(function ($query) use ($formattedStartOfDay, $formattedEndOfDat) {
-            $query->whereBetween('start_at', [$formattedStartOfDay, $formattedEndOfDat])
-                ->orWhereBetween('end_at', [$formattedStartOfDay, $formattedEndOfDat]);
+        $bookedProducts = Schedule::where(function ($query) use ($formattedStartOfDay, $formattedEndOfDay) {
+            $query->whereBetween('start_at', [$formattedStartOfDay, $formattedEndOfDay])
+                ->orWhereBetween('end_at', [$formattedStartOfDay, $formattedEndOfDay]);
         })
-            ->orWhere(function ($query) use ($formattedStartOfDay, $formattedEndOfDat) {
-                $query->where('start_at', '<', $formattedStartOfDay)
-                    ->where('end_at', '>', $formattedEndOfDat);
+            ->orWhere(function ($query) use ($formattedStartOfDay, $formattedEndOfDay) {
+                $query->where('start_at', '<=', $formattedStartOfDay)
+                    ->where('end_at', '>=', $formattedEndOfDay);
             })
             ->pluck('product_id')->toArray();
 
         // get available products
-        $availableProductsQuery = Product::where(function ($query) use ($bookedProducts) {
-            $query->whereNotIn('id', $bookedProducts)
-                ->where('status', 1);
-        })
-            ->orWhere(function ($query) use ($formattedStartAt, $formattedEndAt, $bookedProducts) {
-                $query->where('status', 0)
-                    ->whereNotIn('id', $bookedProducts)
-                    ->where('start_at', '<', $formattedStartAt)
-                    ->where(function ($query) use ($formattedEndAt) {
-                        $query->where('end_at', '>', $formattedEndAt)
-                            ->orWhereNull('end_at');
-                    });
+        $availableProductsQuery = Product::whereNotIn('id', $bookedProducts)
+            ->where('status', 1)
+            ->where('start_at', '<=', $formattedStartOfDay)
+            ->where(function ($query) use ($formattedEndOfDay) {
+                $query->where('end_at', '>=', $formattedEndOfDay)
+                    ->orWhereNull('end_at');
+            })
+            ->where(function ($query) use ($formattedStartOfDay, $formattedEndOfDay) {
+                $query->where('end_at', '>', $formattedStartOfDay)
+                      ->orWhere('start_at', '>', $formattedEndOfDay);
             });
 
         if ($returnType === 'id') {
@@ -143,7 +139,7 @@ class SchedulesController extends Controller
                 \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n>人数：$customfields->passengerNumber\n>免許証番号：$customfields->licenseNumber\n>生年月日：$customfields->dob
                 \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name
                 \n*オプション情報*:\n>貸出オプション： $optionTextDeliveryOption\n>返却オプション： $optionTextReturnOption\n>ベビーシート：$optionTextUseOfBabySheet\n>チャイルドシート：$optionTextUseOfChildSheet\n>ジュニアシート：$optionTextUseOfJuniorSheet\n>予約方法：$reservationMethod
-                \nfrom： " . env('APP_URL')
+                \nfrom： " . config('services.app.env')
         ]);
 
         return $request;
@@ -153,7 +149,7 @@ class SchedulesController extends Controller
     {
         $client = new Client();
 
-        $response = $client->post(env('SLACK_WEBHOOK_URL'), [
+        $response = $client->post(config('services.slack.webhook_url'), [
             'json' => $messageContent,
         ]);
 
