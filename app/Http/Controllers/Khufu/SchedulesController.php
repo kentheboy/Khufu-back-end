@@ -139,6 +139,7 @@ class SchedulesController extends Controller
                 \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n>人数：$customfields->passengerNumber\n>免許証番号：$customfields->licenseNumber\n>生年月日：$customfields->dob
                 \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name
                 \n*オプション情報*:\n>貸出オプション： $optionTextDeliveryOption\n>返却オプション： $optionTextReturnOption\n>ベビーシート：$optionTextUseOfBabySheet\n>チャイルドシート：$optionTextUseOfChildSheet\n>ジュニアシート：$optionTextUseOfJuniorSheet\n>予約方法：$reservationMethod
+                \n*その他*:\n$customfields->memos
                 \nfrom： " . config('services.app.env')
         ]);
 
