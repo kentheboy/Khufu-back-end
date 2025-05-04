@@ -127,6 +127,12 @@ class SchedulesController extends Controller
                 $optionTextReturnOption = "特になし";
                 break;
         }
+        if ($customfields->returnWithoutRefueling == 1) {
+            $optionReturnWithoutRefueling = "ガソリン満タン返却なし(オプション料：￥6,600)";
+        } else {
+            $optionReturnWithoutRefueling = "ガソリン満タン返却あり";
+        }
+
         $optionTextUseOfBabySheet = "{$customfields->useOfBabySheet}台";
         $optionTextUseOfChildSheet = "{$customfields->useOfChildSheet}台";
         $optionTextUseOfJuniorSheet = "{$customfields->useOfJuniorSheet}台";
@@ -137,10 +143,10 @@ class SchedulesController extends Controller
         $this->sendAdminSlackNotice([
             "type" => "mrkdwn",
             "text" => "<!channel> 予約が入りました！
-                \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>空港お出迎え時刻：$customfields->airportPickup\n>空港お見送り時刻：$customfields->airportDropoff\n>予約内容合計金額：$scheduleInfo->total_fee
+                \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>空港お出迎え時刻：$customfields->airportPickup\n>出発便番号：$customfields->arrivalFlightNumber\n>空港お見送り時刻：$customfields->airportDropoff\n>帰着便番号：$customfields->departureFlightNumber\n>予約内容合計金額：$scheduleInfo->total_fee
                 \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n>人数：$customfields->passengerNumber\n>免許証番号：$customfields->licenseNumber\n>生年月日：$customfields->dob
                 \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name\n>乗車定員：$carDetail->passenger
-                \n*オプション情報*:\n>貸出オプション： $optionTextDeliveryOption\n>返却オプション： $optionTextReturnOption\n>ベビーシート：$optionTextUseOfBabySheet\n>チャイルドシート：$optionTextUseOfChildSheet\n>ジュニアシート：$optionTextUseOfJuniorSheet\n>予約方法：$reservationMethod
+                \n*オプション情報*:\n>貸出オプション： $optionTextDeliveryOption\n>返却オプション： $optionTextReturnOption\n>満タン返却不要オプション： $optionReturnWithoutRefueling\n>ベビーシート：$optionTextUseOfBabySheet\n>チャイルドシート：$optionTextUseOfChildSheet\n>ジュニアシート：$optionTextUseOfJuniorSheet\n>予約方法：$reservationMethod
                 \n*その他*:\n$customfields->memos
                 \nfrom： " . config('services.app.env')
         ]);
