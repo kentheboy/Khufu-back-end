@@ -88,8 +88,7 @@ class SchedulesController extends Controller
             'email' => $customerEmail,
             'customfields' => json_encode([
                 'tel' => $customerTel,
-                'licenseNumber' => $customfields->licenseNumber,
-                'dob' => $customfields->dob,
+                'otherRequests' => property_exists($customfields, 'otherRequests') ? $customfields->otherRequests : ''
             ])
         ]);
 
@@ -105,37 +104,8 @@ class SchedulesController extends Controller
 
         $productInfo = Product::find($scheduleInfo->product_id);
 
-        switch ($customfields->deliveryOption) {
-            case 1:
-                $optionTextDeliveryOption = "赤嶺駅貸出";
-                break;
-            case 2:
-                $optionTextDeliveryOption = "那覇市内ホテル貸出";
-                break;
-            default:
-                $optionTextDeliveryOption = "特になし";
-                break;
-        }
-        switch ($customfields->returnOption) {
-            case 1:
-                $optionTextReturnOption = "赤嶺駅返却";
-                break;
-            case 2:
-                $optionTextReturnOption = "那覇市内ホテル返却";
-                break;
-            default:
-                $optionTextReturnOption = "特になし";
-                break;
-        }
-        if ($customfields->returnWithoutRefueling == 1) {
-            $optionReturnWithoutRefueling = "ガソリン満タン返却なし(オプション料：￥6,600)";
-        } else {
-            $optionReturnWithoutRefueling = "ガソリン満タン返却あり";
-        }
-
-        $optionTextUseOfBabySheet = "{$customfields->useOfBabySheet}台";
-        $optionTextUseOfChildSheet = "{$customfields->useOfChildSheet}台";
-        $optionTextUseOfJuniorSheet = "{$customfields->useOfJuniorSheet}台";
+        // prepare option texts
+        $otherRequests = property_exists($customfields, "otherRequests") ? $customfields->otherRequests : '';
         $reservationMethod = property_exists($customfields, "reservationMethod") ? $customfields->reservationMethod : "一般";
 
         $carDetail = json_decode($productInfo->customfields);
@@ -143,11 +113,11 @@ class SchedulesController extends Controller
         $this->sendAdminSlackNotice([
             "type" => "mrkdwn",
             "text" => "<!channel> 予約が入りました！
-                \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>空港お出迎え時刻：$customfields->airportPickup\n>出発便番号：$customfields->arrivalFlightNumber\n>空港お見送り時刻：$customfields->airportDropoff\n>帰着便番号：$customfields->departureFlightNumber\n>予約内容合計金額：$scheduleInfo->total_fee
-                \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n>人数：$customfields->passengerNumber\n>免許証番号：$customfields->licenseNumber\n>生年月日：$customfields->dob
+                \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>予約内容合計金額：$scheduleInfo->total_fee
+                \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n
+                \n*その他*:\n>到着便番号：$customfields->flightNumber\n>特記事項：$otherRequests\n>予約方法：$reservationMethod
                 \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name\n>乗車定員：$carDetail->passenger
-                \n*オプション情報*:\n>貸出オプション： $optionTextDeliveryOption\n>返却オプション： $optionTextReturnOption\n>満タン返却不要オプション： $optionReturnWithoutRefueling\n>ベビーシート：$optionTextUseOfBabySheet\n>チャイルドシート：$optionTextUseOfChildSheet\n>ジュニアシート：$optionTextUseOfJuniorSheet\n>予約方法：$reservationMethod
-                \n*その他*:\n$customfields->memos
+                \n*クーポン*:\n$customfields->memos
                 \nfrom： " . config('services.app.env')
         ]);
 
