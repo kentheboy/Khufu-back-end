@@ -106,6 +106,10 @@ class SchedulesController extends Controller
 
         // prepare option texts
         $otherRequests = property_exists($customfields, "otherRequests") ? $customfields->otherRequests : '';
+        $optionTextUseOfBabySheet = "{$customfields->addtionalOptions->babySeats}台";
+        $optionTextUseOfChildSheet = "{$customfields->addtionalOptions->childSeats}台";
+        $optionTextUseOfJuniorSheet = "{$customfields->addtionalOptions->juniorSeats}台";
+        $optionTextUseOfBabyCart = "{$customfields->addtionalOptions->babyCart}台";
         $reservationMethod = property_exists($customfields, "reservationMethod") ? $customfields->reservationMethod : "一般";
 
         $carDetail = json_decode($productInfo->customfields);
@@ -115,7 +119,9 @@ class SchedulesController extends Controller
             "text" => "<!channel> 予約が入りました！
                 \n*予約内容*:\n>予約ID：$scheduleInfo->id\n>時間：$scheduleInfo->start_at ~ $scheduleInfo->end_at\n>予約内容合計金額：$scheduleInfo->total_fee
                 \n*お客様情報*:\n>お名前：$customerInfo->name\n>メールアドレス：$customerInfo->email\n>電話番号：$customerTel\n
-                \n*その他*:\n>到着便番号：$customfields->flightNumber\n>特記事項：$otherRequests\n>予約方法：$reservationMethod
+                \n*お客様特記事項*:\n>$otherRequests
+                \n*オプション利用数*:\n>ベビーシート：$optionTextUseOfBabySheet\n>チャイルドシート：$optionTextUseOfChildSheet\n>ジュニアシート：$optionTextUseOfJuniorSheet\n>ベビーカート：$optionTextUseOfBabyCart
+                \n*その他*:\n>到着便番号：$customfields->flightNumber\n>予約方法：$reservationMethod
                 \n*車両情報*:\n>車両ID：$productInfo->id\n>車名：$productInfo->name\n>乗車定員：$carDetail->passenger
                 \n*クーポン*:\n$customfields->memos
                 \nfrom： " . config('services.app.env')
